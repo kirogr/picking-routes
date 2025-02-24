@@ -1,7 +1,7 @@
 from datetime import datetime
-
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
+from werkzeug.security import check_password_hash
 from app.services.database import get_db
 
 auth_bp = Blueprint('auth', __name__)
@@ -14,7 +14,7 @@ def login_user():
         db = get_db()
         user = db.users.find_one({"username": username})
 
-        if not user or user['password'] != password:
+        if not user or not check_password_hash(user['password'], password):
             return jsonify({"error": "Invalid username or password"}), 401
 
         venue = db.venue_settings.find_one({"venue_id": user['venue_id']})
@@ -32,6 +32,7 @@ def login_user():
         return jsonify(access_token=access_token), 200
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500
+
 
 @auth_bp.route('/user', methods=['GET'])
 @jwt_required()

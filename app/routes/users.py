@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.services.database import get_db
 from app.utils.helpers import logdb_users_history
@@ -36,12 +37,7 @@ def get_users():
 
     return jsonify(users), 200
 
-@users_bp.route('/<user_id>/reset-password', methods=['POST'])
-@jwt_required()
-def reset_password(user_id):
-    db = get_db()
-    db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'password': 'new_password'}})
-    return jsonify({"message": "Password reset successfully"}), 200
+# todo: route to reset password of a user
 
 @users_bp.route('/<user_id>/delete', methods=['DELETE'])
 @jwt_required()
@@ -164,7 +160,7 @@ def add_user():
     db.users.insert_one({
         'username': new_user['username'],
         'email': new_user["email"],
-        'password': new_user['password'],
+        'password': generate_password_hash(new_user['password']),
         'role': new_user['role'],
         'venue_id': user_document['venue_id'],
         'last_seen': None,
